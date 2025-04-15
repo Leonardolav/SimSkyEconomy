@@ -18,8 +18,7 @@ class Homeuser(LoginRequiredMixin, View):
             raise PermissionDenied("You do not have permission to access this page.")
 
         try:
-            user = User.objects.prefetch_related("userprofilepicture"
-            ).only("id", "username").get(id=user_id)
+            user = User.objects.select_related("userprofilepicture").only("id", "username").get(id=user_id)
 
             profile_picture: Optional[str] = user.userprofilepicture.profile_picture.url if hasattr(user, 'userprofilepicture') and user.userprofilepicture.profile_picture else '👤'
             user_data = {
