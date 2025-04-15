@@ -76,7 +76,7 @@ class SettingsView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to access these settings.")
 
         try:
-            user = User.objects.select_related('profile_picture', 'userprofile').get(id=user_id)
+            user = User.objects.select_related('profile_picture', 'user_profile').get(id=user_id)
             profile = user.userprofile
             
             user_picture = user.profile_picture
@@ -117,7 +117,7 @@ class SettingsView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to modify these settings.")
 
         try:
-            user = User.objects.select_related('userprofile').get(id=user_id)
+            user = User.objects.select_related('user_profile').get(id=user_id)
             profile = user.userprofile
 
             if 'logout' in request.POST:
