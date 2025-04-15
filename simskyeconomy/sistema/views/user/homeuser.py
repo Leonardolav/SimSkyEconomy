@@ -7,6 +7,9 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.views import View
+
+class NoProfilePicture(Exception):
+    pass
 from sistema.models import UserProfilePicture, UserProfile
 
 class Homeuser(LoginRequiredMixin, View):
@@ -20,7 +23,13 @@ class Homeuser(LoginRequiredMixin, View):
         try:
             user = User.objects.select_related("profile_picture").get(id=user_id)
 
-            profile_picture: Optional[str] = user.profile_picture.profile_picture.url if hasattr(user, 'profile_picture') and user.profile_picture.profile_picture else '👤'
+            if user.profile_picture is None:
+                raise NoProfilePicture
+            try:
+                profile_picture: str = user.profile_picture.profile_picture.url
+            except NoProfilePicture:
+                profile_picture = '👤'
+
             user_data = {
                 'id': user.id,
                 'username': user.username,

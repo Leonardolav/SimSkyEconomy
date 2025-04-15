@@ -54,7 +54,10 @@ class LoginView(View):
             raise ValidationError('Password must be between 8 and 128 characters.')
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name)
+        if request.user.is_authenticated:
+            return redirect('userhome', user_id=request.user.id)
+        else:
+            return render(request, self.template_name)
 
     def post(self, request, *args, **kwargs):
         try:

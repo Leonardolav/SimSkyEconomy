@@ -9,6 +9,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, logout, get_user_model
 from sistema.models import UserProfilePicture, UserProfile
 from django.core.validators import validate_email
+
+class NoProfilePicture(Exception):
+    pass
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 
@@ -78,7 +81,12 @@ class SettingsView(LoginRequiredMixin, View):
         try:
             user = User.objects.select_related('profile_picture').get(id=user_id)
 
-            profile_picture_url = user.profile_picture.profile_picture.url if user.profile_picture and user.profile_picture.profile_picture else '👤'
+            try:
+                if user.profile_picture is None:
+                    raise NoProfilePicture
+                profile_picture_url = user.profile_picture.profile_picture.url
+            except NoProfilePicture:
+                profile_picture_url = '👤'
             try:
                 profile = user.user_profile
             except UserProfile.DoesNotExist:

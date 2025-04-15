@@ -7,6 +7,9 @@ from datetime import timedelta
 from django.core.paginator import Paginator
 from sistema.models import User, UserProfile, Reputation, ReputationLevel, UserProfilePicture  # Importar o novo modelo
 
+class NoProfilePicture(Exception):
+    pass
+
 class ReputationView(LoginRequiredMixin, View):
     template_name = 'reputation.html'
     login_url = '/login/'
@@ -19,7 +22,12 @@ class ReputationView(LoginRequiredMixin, View):
         try:
             user = User.objects.select_related('userprofile', 'profile_picture').get(id=user_id)
             profile = user.userprofile
-            user_picture = user.profile_picture.profile_picture if user.profile_picture and user.profile_picture.profile_picture else None
+            try:
+                if not user.profile_picture:
+                    raise NoProfilePicture
+                user_picture = user.profile_picture.profile_picture
+            except NoProfilePicture:
+                user_picture = None
             reputation_data_dict = self.get_reputation_data(request, profile)            
             context = self.prepare_context(user, user_picture, reputation_data_dict['total_score'], reputation_data_dict['level'], reputation_data_dict['progress_percent'],
                                             reputation_data_dict['current_min_score'], reputation_data_dict['next_min_score'], reputation_data_dict['score_30_days'],
