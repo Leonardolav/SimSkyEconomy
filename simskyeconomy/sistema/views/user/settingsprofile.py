@@ -79,7 +79,7 @@ class SettingsView(LoginRequiredMixin, View):
             user = User.objects.select_related('profile_picture').get(id=user_id)
             
             user_picture = user.profile_picture
-            profile_picture_url = user_picture.profile_picture.url if user_picture and user_picture.profile_picture else '👤'
+            profile_picture_url = user.profile_picture.profile_picture.url if user.profile_picture and user.profile_picture.profile_picture else '👤'
             try:
                 profile = user.user_profile
             except UserProfile.DoesNotExist:
