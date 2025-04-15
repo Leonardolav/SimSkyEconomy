@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Settings</title>
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/homeuser.css' %}">
+</head>
+<body>
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <!-- Empty left side for spacing -->
+            <div class="navbar-brand"></div>
+            <!-- Right side with user and theme toggle -->
+            <div class="ms-auto d-flex align-items-center">
+                <!-- Theme Toggle (Decorative Only) -->
+                <button id="theme-toggle" class="btn btn-link nav-icon me-3">
+                    <i id="theme-icon" class="fas fa-sun"></i>
+                </button>
+                <!-- User Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-link nav-icon dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture }}" alt="Profile Picture" class="profile-pic-nav me-2">
+                        {% else %}
+                            <i class="fas fa-user-circle fa-lg me-2"></i>
+                        {% endif %}
+                        <span class="username">{{ user.username }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="{% url 'profile' user.id %}">Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'settings' user.id %}">Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post" action="">
+                                {% csrf_token %}
+                                <button type="submit" name="logout" class="dropdown-item">Log out</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Fixed Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="{% static 'imagens/Logotipo.jpg' %}" alt="SimSky Economy Logo" class="logo">
+        </div>
+        <nav class="nav flex-column">
+            <a class="nav-link" href="{% url 'userhome' user.id %}">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+            <a class="nav-link" href="{% url 'bank' user.id %}">
+                <i class="fas fa-university me-2"></i> Bank
+            </a>
+            <div class="nav-link submenu-toggle">
+                <i class="fas fa-user me-2"></i> User
+                <i class="fas fa-chevron-down submenu-icon"></i>
+            </div>
+            <div class="submenu">
+                <a class="nav-link" href="{% url 'reputation' user.id %}">Reputation</a>
+                <a class="nav-link" href="#">Licenses</a>
+                <a class="nav-link" href="#">Aircraft</a>
+                <!-- Removido o item "Settings" -->
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <section class="main-content py-3 py-md-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="card border rounded-3 shadow-sm">
+                        <div class="card-body p-3 p-md-4">
+                            <h1 class="text-center mb-4">User Settings</h1>
+                            <!-- User Information (Read-Only) -->
+                            <div class="text-center mb-4">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture }}" alt="Profile Picture" class="profile-pic mb-3">
+                                {% else %}
+                                    <i class="fas fa-user-circle fa-5x mb-3 text-muted"></i>
+                                {% endif %}
+                                <h3>{{ user.username }}</h3>
+                                <p class="text-muted">{{ user.profile.email }}</p>
+                            </div>
+                            <!-- User Settings Form -->
+                            <form method="post" id="settings-form">
+                                {% csrf_token %}
+                                <!-- Username -->
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username</label>
+                                    <div id="username-error" class="text-danger small mb-1" style="display: none;">Username already in use</div>
+                                    <div id="username-success" class="text-success small mb-1" style="display: none;">Username available</div>
+                                    <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" data-user-id="{{ user.id }}" required>
+                                </div>
+                                <!-- First Name -->
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.profile.first_name }}" required>
+                                </div>
+                                <!-- Last Name -->
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.profile.last_name }}" required>
+                                </div>
+                                <!-- Current Password (Required for any change) -->
+                                <div class="mb-3">
+                                    <label for="current_password" class="form-label">Current Password (required to save any changes)</label>
+                                    <div id="current-password-error" class="text-danger small mb-1" style="display: none;">Current password is incorrect</div>
+                                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                </div>
+                                <!-- Password Change Section -->
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">New Password (optional)</label>
+                                    <div id="password-requirements" class="text-danger small mb-1" style="display: none;"></div>
+                                    <input type="password" class="form-control" id="new_password" name="new_password">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                    <div id="confirm-password-error" class="text-danger small mb-1" style="display: none;">New passwords do not match</div>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                                </div>
+                                <!-- Submit Button -->
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary" id="save-changes-btn" disabled>Save Changes</button>
+                                </div>
+                            </form>
+                            <!-- Display Messages -->
+                            {% if messages %}
+                                <div class="mt-3">
+                                    {% for message in messages %}
+                                        {% if message.tags != "error" or not message.message|slice:":17" == "Please enter a new" %}
+                                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                                {{ message }}
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bootstrap JS -->
+    <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'js/settings.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="{% static 'js/signup.js' %}" defer></script>
+    <style>
+        .requirements { font-size: 0.9em; margin-top: 5px; }
+        .requirements span { display: block; }
+        .requirements .invalid { color: red; }
+        .requirements .valid { color: green; }
+        .feedback { color: red; font-size: 0.9em; margin-bottom: 10px; display: none; } /* Added margin-bottom */
+        .required-message { color: red; font-size: 0.9em; margin-bottom: 10px; display: none; }
+        .password-mismatch { color: red; font-size: 0.9em; margin-top: 5px; display: none; }
+    </style>
+</head>
+<body>
+    <section class="bg-light py-3 py-md-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-mc-10 col-md-8 col-lg-6 col-xl-5 col-xxl-4">
+                    <div class="card border border-light-subtle rounded-3 shadow-sm">
+                        <div class="card-body p-3 p-md-4 p-xl-5">
+                            <div class="text-center mb-3">
+                                <img src="{% static 'imagens/Logotipo.jpg' %}" alt="SimSky Logo" width="190" height="157">
+                            </div>
+                            <h2 class="fs-6 fw-normal text-center text-secondary mb-4">Create your account</h2>
+                            {% if messages %}
+                                <div class="alert-container">
+                                    {% for message in messages %}
+                                        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">
+                                            {{ message }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <form action="{% url 'signup' %}" method="POST" id="signup-form">
+                                {% csrf_token %}
+                                <div class="row gy-2 overflow-hidden">
+                                    <div class="col-12">
+                                        <div id="username-feedback" class="feedback"></div>
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" name="username" id="username" placeholder="Username" required hx-post="{% url 'signup' %}" hx-trigger="change" hx-target="#username-feedback" hx-swap="innerHTML">
+                                            <label for="username" class="form-label">Username *</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" name="first_name" id="first_name" placeholder="First Name" required>
+                                            <label for="first_name" class="form-label">First Name *</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control" name="last_name" id="last_name" placeholder="Last Name" required>
+                                            <label for="last_name" class="form-label">Last Name *</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div id="email-feedback" class="feedback"></div>
+                                        <div class="form-floating mb-3">
+                                            <input type="email" class="form-control" name="email" id="email" placeholder="Email" required hx-post="{% url 'signup' %}" hx-trigger="change" hx-target="#email-feedback" hx-swap="innerHTML">
+                                            <label for="email" class="form-label">Email *</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-floating mb-3">
+                                            <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
+                                            <label for="password" class="form-label">Password *</label>
+                                        </div>
+                                        <div class="requirements" id="password-requirements">
+                                            <span id="uppercase">One uppercase letter</span>
+                                            <span id="minlength">Minimum 10 characters</span>
+                                            <span id="special">One special character</span>
+                                            <span id="number">One number</span>
+                                            <span id="notusername">Not similar to username</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-floating mb-3">
+                                            <input type="password" class="form-control" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required>
+                                            <label for="confirm_password" class="form-label">Confirm Password *</label>
+                                        </div>
+                                        <div id="password-mismatch" class="password-mismatch">Passwords do not match</div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div id="required-message" class="required-message">Please fill in all required fields *</div>
+                                        <div class="d-grid my-3">
+                                            <button class="btn btn-primary btn-lg" type="submit" id="submit-btn" disabled>Sign Up</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <p class="m-0 text-secondary text-center">Already have an account? <a href="{% url 'login' %}" class="link-primary text-decoration-none">Log in</a></p>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="signupModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="signupModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="modalOkBtn" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
