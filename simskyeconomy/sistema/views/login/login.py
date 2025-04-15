@@ -8,7 +8,6 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
-from ratelimit.decorators import ratelimit
 
 from sistema.models import EmailVerificationToken, PasswordResetToken, UserProfile
 from django.views import View
@@ -57,7 +56,6 @@ class LoginView(View):
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name)
 
-    @ratelimit(key='ip', rate='5/m', block=True)
     def post(self, request, *args, **kwargs):
         try:
             identifier = request.POST.get('username')
