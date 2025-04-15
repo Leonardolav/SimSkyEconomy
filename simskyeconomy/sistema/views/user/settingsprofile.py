@@ -76,12 +76,8 @@ class SettingsView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to access these settings.")
 
         try:
-            user = User.objects.select_related('profile_picture').get(id=user_id)
-            try:
-                profile = user.userprofile
-            except UserProfile.DoesNotExist:
-                profile = UserProfile.objects.create(user=user, registration_date=timezone.now().date())
-
+            user = User.objects.select_related('profile_picture', 'userprofile').get(id=user_id)
+            profile = user.userprofile
             
             user_picture = user.profile_picture
             profile_picture_url = user_picture.profile_picture.url if user_picture and user_picture.profile_picture else '👤'
