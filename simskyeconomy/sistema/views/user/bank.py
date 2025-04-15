@@ -23,7 +23,7 @@ class BankView(LoginRequiredMixin, View):
             user_data = {
                 'id': user.id,
                 'username': user.username,
-                'profile_picture': user.userprofilepicture.profile_picture.url if hasattr(user, 'userprofilepicture') and user.userprofilepicture.profile_picture else None,
+                'profile_picture': user.userprofilepicture.profile_picture.url if hasattr(user, 'userprofilepicture') and user.userprofilepicture.profile_picture else '👤',
             }
             context = {'user': user_data}
             return render(request, self.template_name, context)

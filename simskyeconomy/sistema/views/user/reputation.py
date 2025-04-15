@@ -20,7 +20,7 @@ class ReputationView(LoginRequiredMixin, View):
             user = User.objects.select_related('userprofile', 'userprofilepicture').get(id=user_id)
             profile = user.userprofile
             user_picture = user.userprofilepicture.profile_picture if hasattr(user, 'userprofilepicture') else None
-            reputation_data_dict = self.get_reputation_data(request, profile)
+            reputation_data_dict = self.get_reputation_data(request, profile)            
             context = self.prepare_context(user, user_picture, reputation_data_dict['total_score'], reputation_data_dict['level'], reputation_data_dict['progress_percent'],
                                             reputation_data_dict['current_min_score'], reputation_data_dict['next_min_score'], reputation_data_dict['score_30_days'],
                                             reputation_data_dict['score_60_days'], reputation_data_dict['score_90_days'], reputation_data_dict['reputations'], request.GET.get('period', 'all'))
@@ -85,13 +85,12 @@ class ReputationView(LoginRequiredMixin, View):
         return 100.0
     
     def prepare_context(self, user, user_picture, total_score, current_level, progress_percent_str, current_min_score, next_level_obj, score_30_days, score_60_days, score_90_days, page_obj, period):
-        
         reputation_data = {
             'total_score': total_score,
             'level': current_level,
             'progress_percent': progress_percent_str,
             'current_min_score': current_min_score,
-            'next_min_score': next_level_obj if next_level_obj else None,
+            'next_min_score': next_level_obj.min_score if next_level_obj else None,            
             'score_30_days': score_30_days,
             'score_60_days': score_60_days,
             'score_90_days': score_90_days,
@@ -99,7 +98,7 @@ class ReputationView(LoginRequiredMixin, View):
         }
         
         return {
-            'user': {'id': user.id, 'username': user.username, 'profile_picture': user_picture.url if user_picture else None,},
+            'user': {'id': user.id, 'username': user.username, 'profile_picture': user_picture.url if user_picture else '👤'},
             'reputation_data': reputation_data,
             'page_obj': page_obj,
             'selected_period': period,

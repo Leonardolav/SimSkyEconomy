@@ -29,7 +29,7 @@ class ProfileView(LoginRequiredMixin, View):
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
-                'profile_picture': profile.profile_picture.url if profile.profile_picture else None,
+                'profile_picture': user.userprofilepicture.profile_picture.url if hasattr(user, 'userprofilepicture') and user.userprofilepicture.profile_picture else '👤',
             }
             context = {'user': user_data}
             return render(request, self.template_name, context)
@@ -105,7 +105,7 @@ class SettingsView(LoginRequiredMixin, View):
                 'username': user.username,
                 'email': profile.email,
                 'profile': profile,
-                'profile_picture': user_picture.profile_picture.url if user_picture.profile_picture else None,
+                'profile_picture': user_picture.profile_picture.url if user_picture.profile_picture else '👤',
             }
             context = {'user': user_data}
             return render(request, self.template_name, context)

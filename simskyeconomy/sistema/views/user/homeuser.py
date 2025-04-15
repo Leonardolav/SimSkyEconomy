@@ -1,4 +1,5 @@
 # sistema/views/user/homeuser.py
+from typing import Optional
 from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
@@ -20,17 +21,18 @@ class Homeuser(LoginRequiredMixin, View):
         try:
             user = User.objects.prefetch_related(
                 Prefetch(
-                    "userprofilepicture_set",
-                    queryset=UserProfilePicture.objects.all(),
-                    to_attr="profile_pictures"
+                    "userprofilepicture",
+                    queryset=UserProfilePicture.objects.all()
                 )
             ).only("id", "username").get(id=user_id)
-            profile_picture = user.profile_pictures[0].profile_picture.url if user.profile_pictures else None
+
+            profile_picture: Optional[str] = user.userprofilepicture.profile_picture.url if hasattr(user, 'userprofilepicture') and user.userprofilepicture.profile_picture else '👤'
             user_data = {
                 'id': user.id,
                 'username': user.username,
-                'profile_picture': profile.profile_picture.url if profile.profile_picture else None,
+                'profile_picture': profile_picture,
             }
+            
             context = {'user': user_data}
             return render(request, self.template_name, context)
         except User.DoesNotExist:
