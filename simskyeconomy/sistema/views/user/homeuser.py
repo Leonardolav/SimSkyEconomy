@@ -4,7 +4,6 @@ from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.db.models import Prefetch
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.views import View
@@ -19,11 +18,7 @@ class Homeuser(LoginRequiredMixin, View):
             raise PermissionDenied("You do not have permission to access this page.")
 
         try:
-            user = User.objects.prefetch_related(
-                Prefetch(
-                    "userprofilepicture",
-                    queryset=UserProfilePicture.objects.all()
-                )
+            user = User.objects.prefetch_related("userprofilepicture"
             ).only("id", "username").get(id=user_id)
 
             profile_picture: Optional[str] = user.userprofilepicture.profile_picture.url if hasattr(user, 'userprofilepicture') and user.userprofilepicture.profile_picture else '👤'
