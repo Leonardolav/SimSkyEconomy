@@ -9,15 +9,18 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/homeuser.css' %}">
 </head>
-<body>
-    <!-- Top Navbar -->
+<body class="bg-light">
+    
+    <!-- Top Navbar Section -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container-fluid">
-            <!-- Empty left side for spacing -->
             <div class="navbar-brand"></div>
-            <!-- Right side with user and theme toggle -->
             <div class="ms-auto d-flex align-items-center">
-                <!-- Theme Toggle (Decorative Only) -->
+
+                <!-- Theme Toggle -->
+                
+                
+                
                 <button id="theme-toggle" class="btn btn-link nav-icon me-3">
                     <i id="theme-icon" class="fas fa-sun"></i>
                 </button>
@@ -46,8 +49,9 @@
             </div>
         </div>
     </nav>
-
-    <!-- Fixed Sidebar -->
+    
+    <!-- Sidebar Section -->
+    
     <div class="sidebar">
         <div class="logo-container">
             <img src="{% static 'imagens/Logotipo.jpg' %}" alt="SimSky Economy Logo" class="logo">
@@ -71,8 +75,9 @@
             </div>
         </nav>
     </div>
-
-    <!-- Main Content -->
+    
+    <!-- Main Content Section -->
+    
     <section class="main-content py-3 py-md-5">
         <div class="container">
             <div class="row justify-content-center">
@@ -80,7 +85,8 @@
                     <div class="card border rounded-3 shadow-sm">
                         <div class="card-body p-3 p-md-4">
                             <h1 class="text-center mb-4">User Settings</h1>
-                            <!-- User Information (Read-Only) -->
+
+                            <!-- User Profile Information -->
                             <div class="text-center mb-4">
                                 {% if user.profile_picture %}
                                     <img src="{{ user.profile_picture }}" alt="Profile Picture" class="profile-pic mb-3">
@@ -90,49 +96,59 @@
                                 <h3>{{ user.username }}</h3>
                                 <p class="text-muted">{{ user.profile.email }}</p>
                             </div>
-                            <!-- User Settings Form -->
+
+                            <!-- User Profile Update Form -->
                             <form method="post" id="settings-form">
                                 {% csrf_token %}
-                                <!-- Username -->
+
+                                <!-- Username Field -->
                                 <div class="mb-3">
                                     <label for="username" class="form-label">Username</label>
                                     <div id="username-error" class="text-danger small mb-1" style="display: none;">Username already in use</div>
                                     <div id="username-success" class="text-success small mb-1" style="display: none;">Username available</div>
                                     <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" data-user-id="{{ user.id }}" required>
                                 </div>
-                                <!-- First Name -->
+                                
+                                <!-- First Name Field -->
                                 <div class="mb-3">
                                     <label for="first_name" class="form-label">First Name</label>
                                     <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.profile.first_name }}" required>
                                 </div>
-                                <!-- Last Name -->
+                                
+                                <!-- Last Name Field -->
                                 <div class="mb-3">
                                     <label for="last_name" class="form-label">Last Name</label>
                                     <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.profile.last_name }}" required>
                                 </div>
-                                <!-- Current Password (Required for any change) -->
+                                
+                                <!-- Current Password Field -->
                                 <div class="mb-3">
                                     <label for="current_password" class="form-label">Current Password (required to save any changes)</label>
                                     <div id="current-password-error" class="text-danger small mb-1" style="display: none;">Current password is incorrect</div>
                                     <input type="password" class="form-control" id="current_password" name="current_password" required>
                                 </div>
-                                <!-- Password Change Section -->
+                                
+                                <!-- New Password Field -->
                                 <div class="mb-3">
                                     <label for="new_password" class="form-label">New Password (optional)</label>
                                     <div id="password-requirements" class="text-danger small mb-1" style="display: none;"></div>
                                     <input type="password" class="form-control" id="new_password" name="new_password">
                                 </div>
+                                
+                                <!-- Confirm New Password Field -->
                                 <div class="mb-3">
                                     <label for="confirm_password" class="form-label">Confirm New Password</label>
                                     <div id="confirm-password-error" class="text-danger small mb-1" style="display: none;">New passwords do not match</div>
                                     <input type="password" class="form-control" id="confirm_password" name="confirm_password">
                                 </div>
-                                <!-- Submit Button -->
+                                
+                                <!-- Save Changes Button -->
                                 <div class="d-grid">
                                     <button type="submit" class="btn btn-primary" id="save-changes-btn" disabled>Save Changes</button>
                                 </div>
                             </form>
-                            <!-- Display Messages -->
+
+                            <!-- Messages Display Section -->
                             {% if messages %}
                                 <div class="mt-3">
                                     {% for message in messages %}
@@ -149,10 +165,11 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div>        
     </section>
-
-    <!-- Bootstrap JS -->
+    
+    <!-- Scripts Section -->
+    
     <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="{% static 'js/settings.js' %}"></script>

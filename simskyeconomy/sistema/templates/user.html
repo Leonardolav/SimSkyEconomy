@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en" id="html-root">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard</title>
     <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/homeuser.css' %}">
+    {% load static %}    
+    <link rel="stylesheet" href="{% static 'css/homeuser.css' %}">    
 </head>
+
 <body>
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container-fluid">
+
             <!-- Empty left side for spacing -->
             <div class="navbar-brand"></div>
             <!-- Right side with user and theme toggle -->
@@ -23,6 +26,7 @@
                 </button>
                 <!-- User Dropdown -->
                 <div class="dropdown">
+
                     <button class="btn btn-link nav-icon dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if user.profile_picture %}
                             <img src="{{ user.profile_picture }}" alt="Profile Picture" class="profile-pic-nav me-2">
@@ -31,6 +35,7 @@
                         {% endif %}
                         <span class="username">{{ user.username }}</span>
                     </button>
+
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{% url 'profile' user.id %}">Profile</a></li>
                         <li><a class="dropdown-item" href="{% url 'settings' user.id %}">Settings</a></li>
@@ -44,6 +49,7 @@
                     </ul>
                 </div>
             </div>
+
         </div>
     </nav>
 
@@ -52,6 +58,7 @@
         <div class="logo-container">
             <img src="{% static 'imagens/Logotipo.jpg' %}" alt="SimSky Economy Logo" class="logo">
         </div>
+
         <nav class="nav flex-column">
             <a class="nav-link active" href="{% url 'userhome' user.id %}">
                 <i class="fas fa-tachometer-alt me-2"></i> Dashboard
@@ -62,12 +69,14 @@
             <div class="nav-link submenu-toggle">
                 <i class="fas fa-user me-2"></i> User
                 <i class="fas fa-chevron-down submenu-icon"></i>
-            </div>
+            </div>            
+
             <div class="submenu">
                 <a class="nav-link" href="{% url 'reputation' user.id %}">Reputation</a>
                 <a class="nav-link" href="#">Licenses</a>
                 <a class="nav-link" href="#">Aircraft</a>
             </div>
+
         </nav>
     </div>
 
@@ -76,6 +85,7 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-12 col-md-8 col-lg-6">
+
                     <div class="card border rounded-3 shadow-sm">
                         <div class="card-body p-3 p-md-4">
                             <h1 class="text-center">Welcome, {{ user.username }}!</h1>
@@ -83,6 +93,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </section>
@@ -90,23 +101,24 @@
     <!-- Bootstrap JS -->
     <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Theme Toggle Script -->
+
     <script>
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
         const htmlRoot = document.getElementById('html-root');
 
         // Load theme from localStorage
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = localStorage.getItem('theme') || 'light';        
         htmlRoot.classList.add(savedTheme);
         themeIcon.className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
 
         // Toggle theme on click
-        themeToggle.addEventListener('click', () => {
+        themeToggle.addEventListener('click', () => {            
             const currentTheme = htmlRoot.classList.contains('dark') ? 'dark' : 'light';
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            htmlRoot.classList.remove(currentTheme);
+            htmlRoot.classList.remove(currentTheme);            
             htmlRoot.classList.add(newTheme);
-            localStorage.setItem('theme', newTheme);
+            localStorage.setItem('theme', newTheme);            
             themeIcon.className = newTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
         });
     </script>

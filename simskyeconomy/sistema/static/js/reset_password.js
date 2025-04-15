@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalBody = document.getElementById('resetPasswordModalBody');
     const modalOkBtn = document.getElementById('modalOkBtn');
 
-    function validatePassword(password) {
-        const hasUpperCase = /[A-Z]/.test(password);
-        const hasMinLength = password.length >= 10;
-        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    function validatePassword(password) {        
+        const hasUpperCase = /[A-Z]/.test(password);        
+        const hasMinLength = password.length >= 10;        
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);        
         const hasNumber = /\d/.test(password);
 
         document.getElementById('uppercase').className = hasUpperCase ? 'valid' : 'invalid';

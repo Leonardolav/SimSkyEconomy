@@ -41,11 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Unexpected error: ' + response.status);
             }
         })
-        .then(data => {
-            if (data) {
+        .then(data => {            
+            if (data && !data.success) {
                 if (data.account_locked) {
                     // Display the account locked message in the modal
-                    modalTitle.textContent = 'Account Locked';
+                    modalTitle.textContent = 'Account Locked';                    
                     modalBody.innerHTML = data.message; // Message: "Your account is locked due to multiple failed login attempts..."
                     emailVerificationModal.show();
                 } else if (data.email_not_verified) {
@@ -53,9 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     modalBody.innerHTML = data.message;
                     htmx.process(modalBody);
                     emailVerificationModal.show();
-                } else if (!data.success) {
+                } else {
                     // Display error message above the Username/Email field
-                    errorContainer.textContent = 'Invalid username, email, or password.'; // Already in English
+                    errorContainer.textContent = data.message; // Already in English
                     errorContainer.classList.remove('d-none');
                 }
             }

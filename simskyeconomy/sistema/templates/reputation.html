@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="light">
 <head>
+    <!-- Metadata and Title -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reputation Dashboard</title>
+
+    <!-- External CSS Libraries -->
     <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/homeuser.css' %}">
+
+    <!-- Custom CSS Styles -->
     <style>
-        .progress-bar { transition: width 0.6s ease; }
-        .dashboard-card { min-height: 200px; }
-        .table-responsive { max-height: 400px; }
+        .progress-bar { transition: width 0.6s ease; } /* Smooth transition for progress bar width changes */
+        .dashboard-card { min-height: 200px; } /* Minimum height for dashboard cards */
+        .table-responsive { max-height: 400px; } /* Maximum height for table responsiveness */
     </style>
 </head>
 <body>
@@ -19,12 +24,17 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container-fluid">
             <div class="navbar-brand"></div>
+
+            <!-- User and Theme Toggles -->
             <div class="ms-auto d-flex align-items-center">
+                <!-- Theme Toggle Button -->
                 <button id="theme-toggle" class="btn btn-link nav-icon me-3">
                     <i id="theme-icon" class="fas fa-sun"></i>
                 </button>
+
+                <!-- User Dropdown Menu -->
                 <div class="dropdown">
-                    <button class="btn btn-link nav-icon dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-link nav-icon dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">                        
                         {% if user.profile_picture %}
                             <img src="{{ user.profile_picture }}" alt="Profile Picture" class="profile-pic-nav me-2">
                         {% else %}
@@ -32,6 +42,7 @@
                         {% endif %}
                         <span class="username">{{ user.username }}</span>
                     </button>
+                    <!-- User Dropdown Items -->
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{% url 'profile' user.id %}">Profile</a></li>
                         <li><a class="dropdown-item" href="{% url 'settings' user.id %}">Settings</a></li>
@@ -50,10 +61,12 @@
 
     <!-- Fixed Sidebar -->
     <div class="sidebar">
+        <!-- Logo -->
         <div class="logo-container">
             <img src="{% static 'imagens/Logotipo.jpg' %}" alt="SimSky Economy Logo" class="logo">
         </div>
         <nav class="nav flex-column">
+            <!-- Sidebar Links -->
             <a class="nav-link" href="{% url 'userhome' user.id %}">
                 <i class="fas fa-tachometer-alt me-2"></i> Dashboard
             </a>
@@ -63,12 +76,14 @@
             <div class="nav-link submenu-toggle">
                 <i class="fas fa-user me-2"></i> User
                 <i class="fas fa-chevron-down submenu-icon"></i>
-            </div>
+            </div>            
+            <!-- Submenu Links -->
             <div class="submenu">
                 <a class="nav-link active" href="{% url 'reputation' user.id %}">Reputation</a>
                 <a class="nav-link" href="#">Licenses</a>
                 <a class="nav-link" href="#">Aircraft</a>
             </div>
+            
         </nav>
     </div>
 
@@ -76,12 +91,14 @@
     <section class="main-content py-3 py-md-5">
         <div class="container">
             <h1 class="mb-4">Reputation Dashboard</h1>
+            <!-- Dashboard Cards Row -->
             <div class="row g-4">
                 <!-- Reputation Score Card -->
                 <div class="col-md-4">
                     <div class="card dashboard-card shadow-sm">
                         <div class="card-body text-center">
                             <h5 class="card-title">Current Score</h5>
+                            <!-- Display Reputation Score, Level, and Progress -->
                             <h2 class="text-primary">{{ reputation_data.total_score }}</h2>
                             <p class="text-muted">Level: {{ reputation_data.level }}</p>
                             <div class="progress mt-3" style="height: 20px;">
@@ -93,6 +110,7 @@
                                     {{ reputation_data.progress_percent }}%
                                 </div>
                             </div>
+                            <!-- Show Progress to Next Level or Maximum Level Message -->
                             {% if reputation_data.next_min_score %}
                                 <p class="text-muted mt-2">
                                     Progress to next level: {{ reputation_data.total_score }} / {{ reputation_data.next_min_score }}
@@ -107,6 +125,7 @@
                 <div class="col-md-4">
                     <div class="card dashboard-card shadow-sm">
                         <div class="card-body">
+                            <!-- Display Score History -->
                             <h5 class="card-title">Score History</h5>
                             <ul class="list-unstyled">
                                 <li>30 Days: <span class="text-success">+{{ reputation_data.score_30_days }}</span></li>
@@ -120,6 +139,7 @@
                 <div class="col-md-4">
                     <div class="card dashboard-card shadow-sm">
                         <div class="card-body text-center">
+                            <!-- Display Reputation Grade -->
                             <h5 class="card-title">Reputation Grade</h5>
                             <h1 class="display-4">{{ reputation_data.level }}</h1>
                             <p class="text-muted">Based on your total score</p>
@@ -129,11 +149,12 @@
                 <!-- Reputation Details Table -->
                 <div class="col-12">
                     <div class="card shadow-sm">
-                        <div class="card-body">
+                        <div class="card-body">                            
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title mb-0">Reputation History</h5>
-                                <!-- Dropdown de Filtro -->
+                                <!-- Filter Dropdown -->
                                 <div class="dropdown">
+                                    <!-- Filter Dropdown Button -->
                                     <button class="btn btn-outline-primary dropdown-toggle" type="button" id="periodFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                         Filter by Period: {% if selected_period == 'all' %}All{% else %}{{ selected_period }} Days{% endif %}
                                     </button>
@@ -145,6 +166,7 @@
                                     </ul>
                                 </div>
                             </div>
+                            <!-- Reputation History Table -->
                             <div class="table-responsive">
                                 <table class="table table-striped">
                                     <thead>
@@ -173,8 +195,9 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <!-- Controles de Paginação -->
+                            <!-- Pagination Controls -->
                             {% if page_obj.has_other_pages %}
+                            <!-- Pagination Navigation -->
                             <nav aria-label="Page navigation">
                                 <ul class="pagination justify-content-center mt-3">
                                     <!-- Botão "Anterior" -->
@@ -190,7 +213,7 @@
                                     </li>
                                     {% endif %}
 
-                                    <!-- Números das Páginas -->
+                                    <!-- Page Numbers -->
                                     {% for num in page_obj.paginator.page_range %}
                                     {% if page_obj.number == num %}
                                     <li class="page-item active">
@@ -203,7 +226,7 @@
                                     {% endif %}
                                     {% endfor %}
 
-                                    <!-- Botão "Próximo" -->
+                                    <!-- Botão "Next" -->
                                     {% if page_obj.has_next %}
                                     <li class="page-item">
                                         <a class="page-link" href="?{% if selected_period != 'all' %}period={{ selected_period }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next">
@@ -225,11 +248,13 @@
         </div>
     </section>
 
-    <!-- Bootstrap JS -->
+    <!-- Bootstrap JavaScript -->
     <script src="https://unpkg.com/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
+    
+    <!-- Custom JavaScript for Theme Toggle -->
     <script>
-        const themeToggle = document.getElementById('theme-toggle');
+        // Get elements for theme toggle
+        const themeToggle = document.getElementById('theme-toggle');        
         const themeIcon = document.getElementById('theme-icon');
         const htmlRoot = document.getElementById('html-root');
 
@@ -237,6 +262,7 @@
         htmlRoot.classList.add(savedTheme);
         themeIcon.className = savedTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
 
+        // Toggle Theme on Click
         themeToggle.addEventListener('click', () => {
             const currentTheme = htmlRoot.classList.contains('dark') ? 'dark' : 'light';
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';

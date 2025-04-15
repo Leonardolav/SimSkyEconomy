@@ -20,15 +20,6 @@
                                 <img src="{% static 'imagens/Logotipo.jpg' %}" alt="SimSky Logo" width="190" height="157">
                             </div>
                             <h2 class="fs-6 fw-normal text-center text-secondary mb-4">Sign in to your account</h2>
-                            {% if messages %}
-                                <div class="alert-container">
-                                    {% for message in messages %}
-                                        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">
-                                            {{ message }}
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
                             <form action="{% url 'login' %}" method="POST" id="login-form">
                                 {% csrf_token %}
                                 <div class="row gy-2 overflow-hidden">
