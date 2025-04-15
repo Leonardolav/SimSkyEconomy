@@ -19,7 +19,7 @@ class ReputationView(LoginRequiredMixin, View):
         try:
             user = User.objects.select_related('userprofile', 'profile_picture').get(id=user_id)
             profile = user.userprofile
-            user_picture = user.userprofilepicture.profile_picture if hasattr(user, 'userprofilepicture') else None
+            user_picture = user.profile_picture.profile_picture if user.profile_picture and user.profile_picture.profile_picture else None
             reputation_data_dict = self.get_reputation_data(request, profile)            
             context = self.prepare_context(user, user_picture, reputation_data_dict['total_score'], reputation_data_dict['level'], reputation_data_dict['progress_percent'],
                                             reputation_data_dict['current_min_score'], reputation_data_dict['next_min_score'], reputation_data_dict['score_30_days'],

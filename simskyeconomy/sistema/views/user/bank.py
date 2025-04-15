@@ -16,14 +16,14 @@ class BankView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You do not have permission to access this bank information.")
 
         try:
-            user = User.objects.filter(id=user_id).select_related('userprofilepicture').first()
+            user = User.objects.filter(id=user_id).select_related('profile_picture').first()
             if user is None:
                 raise Http404("User not found")
-            
+            profile_picture = user.profile_picture.profile_picture.url if hasattr(user, 'profile_picture') and user.profile_picture.profile_picture else '👤'
             user_data = {
                 'id': user.id,
                 'username': user.username,
-                'profile_picture': user.userprofilepicture.profile_picture.url if hasattr(user, 'userprofilepicture') and user.userprofilepicture.profile_picture else '👤',
+                'profile_picture': profile_picture,
             }
             context = {'user': user_data}
             return render(request, self.template_name, context)

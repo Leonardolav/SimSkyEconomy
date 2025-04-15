@@ -20,16 +20,15 @@ class ProfileView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to access this profile.")
 
         try:
-            user = User.objects.select_related('profile_picture').get(id=user_id)
+            user = User.objects.select_related('profile_picture').get(id=user_id)            
             
-            profile_picture_instance = getattr(user, 'userprofilepicture', None)
 
             user_data = {
 
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
-                'profile_picture': user.userprofilepicture.profile_picture.url if hasattr(user, 'userprofilepicture') and user.userprofilepicture.profile_picture else '👤',
+                'profile_picture': user.profile_picture.profile_picture.url if hasattr(user, 'profile_picture') and user.profile_picture.profile_picture else '👤',
             }
             context = {'user': user_data}
             return render(request, self.template_name, context)
@@ -42,7 +41,7 @@ class ProfileView(LoginRequiredMixin, View):
 
         try:
             user = User.objects.select_related('profile_picture').get(id=user_id)
-            profile = user.userprofilepicture
+            profile = user.profile_picture
 
             # Atualizar a foto de perfil
             if 'profile_picture' in request.FILES:
@@ -76,13 +75,11 @@ class SettingsView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to access these settings.")
 
         try:
-            user = User.objects.select_related('userprofile', 'userprofilepicture').get(id=user_id)
-            try:
-                profile = user.userprofile
-                user_picture = user.userprofilepicture
-            except (UserProfile.DoesNotExist, UserProfilePicture.DoesNotExist):
-                profile = UserProfile.objects.create(user=user)
-                user_picture = UserProfilePicture.objects.create(user=user)
+            user = User.objects.select_related('profile_picture').get(id=user_id)
+            profile = user.userprofile if hasattr(user, 'userprofile') else UserProfile.objects.create(user=user)
+            user_picture = user.profile_picture
+            profile_picture_url = user_picture.profile_picture.url if user_picture and user_picture.profile_picture else '👤'
+
 
 
             # Verificação de nome de usuário via AJAX
@@ -105,7 +102,7 @@ class SettingsView(LoginRequiredMixin, View):
                 'username': user.username,
                 'email': profile.email,
                 'profile': profile,
-                'profile_picture': user_picture.profile_picture.url if user_picture.profile_picture else '👤',
+                'profile_picture': profile_picture_url,
             }
             context = {'user': user_data}
             return render(request, self.template_name, context)
