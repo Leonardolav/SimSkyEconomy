@@ -1,6 +1,7 @@
 # sistema/views/user/profile.py
 import requests
 from django.views import View
+from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, JsonResponse, HttpResponseForbidden
@@ -76,7 +77,12 @@ class SettingsView(LoginRequiredMixin, View):
 
         try:
             user = User.objects.select_related('profile_picture').get(id=user_id)
-            profile = user.userprofile if hasattr(user, 'userprofile') else UserProfile.objects.create(user=user)
+            try:
+                profile = user.userprofile
+            except UserProfile.DoesNotExist:
+                profile = UserProfile.objects.create(user=user, registration_date=timezone.now().date())
+
+            
             user_picture = user.profile_picture
             profile_picture_url = user_picture.profile_picture.url if user_picture and user_picture.profile_picture else '👤'
 
