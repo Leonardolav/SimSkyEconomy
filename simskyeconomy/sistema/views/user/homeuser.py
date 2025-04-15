@@ -1,11 +1,13 @@
 # sistema/views/user/homeuser.py
-from django.views import View
-from django.shortcuts import render, redirect
-from django.contrib.auth.models import User
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404
 from django.contrib.auth import logout
-from sistema.models import UserProfilePicture
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
+from django.db.models import Prefetch
+from django.http import Http404
+from django.shortcuts import redirect, render
+from django.views import View
+from sistema.models import UserProfilePicture, UserProfile
 
 class Homeuser(LoginRequiredMixin, View):
     template_name = 'user.html'
@@ -13,11 +15,17 @@ class Homeuser(LoginRequiredMixin, View):
 
     def get(self, request, user_id, *args, **kwargs):
         if request.user.id != user_id:
-            return redirect('userhome', user_id=request.user.id)
+            raise PermissionDenied("You do not have permission to access this page.")
 
         try:
-            user = User.objects.get(id=user_id)
-            profile, created = UserProfilePicture.objects.get_or_create(user=user)
+            user = User.objects.prefetch_related(
+                Prefetch(
+                    "userprofilepicture_set",
+                    queryset=UserProfilePicture.objects.all(),
+                    to_attr="profile_pictures"
+                )
+            ).only("id", "username").get(id=user_id)
+            profile_picture = user.profile_pictures[0].profile_picture.url if user.profile_pictures else None
             user_data = {
                 'id': user.id,
                 'username': user.username,
@@ -30,7 +38,7 @@ class Homeuser(LoginRequiredMixin, View):
 
     def post(self, request, user_id, *args, **kwargs):
         if request.user.id != user_id:
-            return redirect('userhome', user_id=request.user.id)
+            raise PermissionDenied("You do not have permission to perform this action.")
 
         if 'logout' in request.POST:
             logout(request)

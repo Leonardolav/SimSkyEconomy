@@ -3,10 +3,12 @@ import requests
 from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, logout
 from sistema.models import UserProfilePicture, UserProfile
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 
 class ProfileView(LoginRequiredMixin, View):
@@ -15,13 +17,15 @@ class ProfileView(LoginRequiredMixin, View):
 
     def get(self, request, user_id, *args, **kwargs):
         if request.user.id != user_id:
-            return redirect('profile', user_id=request.user.id)
+            return HttpResponseForbidden("You are not authorized to access this profile.")
 
         try:
-            user = User.objects.get(id=user_id)
-            # Certifique-se de que o perfil existe
-            profile, created = UserProfilePicture.objects.get_or_create(user=user)
+            user = User.objects.select_related('userprofilepicture').get(id=user_id)
+            
+            profile_picture_instance = getattr(user, 'userprofilepicture', None)
+
             user_data = {
+
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
@@ -34,13 +38,23 @@ class ProfileView(LoginRequiredMixin, View):
 
     def post(self, request, user_id, *args, **kwargs):
         if request.user.id != user_id:
-            return redirect('profile', user_id=request.user.id)
+            return HttpResponseForbidden("You are not authorized to update this profile.")
 
         try:
-            user = User.objects.get(id=user_id)
-            profile, created = UserProfilePicture.objects.get_or_create(user=user)
+            user = User.objects.select_related('userprofilepicture').get(id=user_id)
+            profile = user.userprofilepicture
 
             # Atualizar a foto de perfil
+            if 'profile_picture' in request.FILES:
+                uploaded_file = request.FILES['profile_picture']
+                # Validar o tipo do arquivo
+                if not uploaded_file.content_type.startswith('image/'):
+                    messages.error(request, "Invalid file type. Please upload an image.")
+                    return redirect('profile', user_id=user.id)
+                # Validar o tamanho do arquivo (exemplo: limite de 2MB)
+                if uploaded_file.size > 2 * 1024 * 1024:  # 2MB em bytes
+                    messages.error(request, "File too large. Maximum file size is 2MB.")
+                    return redirect('profile', user_id=user.id)
             if 'profile_picture' in request.FILES:  # Corrigido para usar a chave correta
                 profile.profile_picture = request.FILES['profile_picture']
                 profile.save()
@@ -59,22 +73,28 @@ class SettingsView(LoginRequiredMixin, View):
 
     def get(self, request, user_id, *args, **kwargs):
         if request.user.id != user_id:
-            return redirect('settings', user_id=request.user.id)
+            return HttpResponseForbidden("You are not authorized to access these settings.")
 
         try:
-            user = User.objects.get(id=user_id)
-            profile, created = UserProfile.objects.get_or_create(user=user)
-            user_picture, created = UserProfilePicture.objects.get_or_create(user=user)
+            user = User.objects.select_related('userprofile', 'userprofilepicture').get(id=user_id)
+            try:
+                profile = user.userprofile
+                user_picture = user.userprofilepicture
+            except (UserProfile.DoesNotExist, UserProfilePicture.DoesNotExist):
+                profile = UserProfile.objects.create(user=user)
+                user_picture = UserProfilePicture.objects.create(user=user)
+
 
             # Verificação de nome de usuário via AJAX
             if 'check_username' in request.GET:
-                username = request.GET.get('username', '').strip()
-                if username:
-                    exists = User.objects.filter(username=username).exclude(id=user.id).exists()
-                    return JsonResponse({'available': not exists})
-                return JsonResponse({'available': False, 'error': 'Username cannot be empty'})
+                
+                username = request.GET.get('username', '')
+                if not username:
+                    return JsonResponse({'available': False, 'error': 'Username cannot be empty'})
+                exists = User.objects.filter(username=username).exclude(id=user.id).exists()
+                return JsonResponse({'available': not exists})
 
-            # Verificação da senha atual via AJAX
+           # Verificação da senha atual via AJAX
             if 'check_password' in request.GET:
                 password = request.GET.get('password', '')
                 user_auth = authenticate(username=user.username, password=password)
@@ -92,84 +112,110 @@ class SettingsView(LoginRequiredMixin, View):
         except User.DoesNotExist:
             raise Http404("User not found")
 
+
     def post(self, request, user_id, *args, **kwargs):
         if request.user.id != user_id:
-            return redirect('settings', user_id=request.user.id)
+            return HttpResponseForbidden("You are not authorized to modify these settings.")
 
         try:
-            user = User.objects.get(id=user_id)
-            profile = UserProfile.objects.get(user=user)
+            user = User.objects.select_related('userprofile').get(id=user_id)
+            profile = user.userprofile
 
-            # Verificar se o botão de logout foi clicado
             if 'logout' in request.POST:
                 logout(request)
                 return redirect('login')
-
-            # Lista para rastrear mudanças
+            
             changes = []
-
-            # Atualizar username (apenas se alterado)
+            
             if 'username' in request.POST:
-                new_username = request.POST['username'].strip()
-                if new_username and new_username != user.username:
-                    if User.objects.filter(username=new_username).exclude(id=user.id).exists():
-                        messages.error(request, "This username is already taken. Please choose a different one.")
-                    else:
-                        old_username = user.username
-                        user.username = new_username
-                        user.save()
-                        changes.append(f"Username changed from '{old_username}' to '{new_username}'")
-                        messages.success(request, "Username updated successfully!")
+                changes.extend(self.update_username(request, user))
+            
+            if 'first_name' in request.POST or 'last_name' in request.POST:
+                changes.extend(self.update_profile_info(request, profile))
+            
+            if any(field in request.POST for field in ['current_password', 'new_password', 'confirm_password']):
+                changes.extend(self.update_password(request, user))
 
-            # Atualizar first_name (apenas se alterado)
-            if 'first_name' in request.POST:
-                new_first_name = request.POST['first_name'].strip()
-                if new_first_name and new_first_name != profile.first_name:
-                    old_first_name = profile.first_name
-                    profile.first_name = new_first_name
-                    profile.save()
-                    changes.append(f"First name changed from '{old_first_name}' to '{new_first_name}'")
-                    messages.success(request, "First name updated successfully!")
-
-            # Atualizar last_name (apenas se alterado)
-            if 'last_name' in request.POST:
-                new_last_name = request.POST['last_name'].strip()
-                if new_last_name and new_last_name != profile.last_name:
-                    old_last_name = profile.last_name
-                    profile.last_name = new_last_name
-                    profile.save()
-                    changes.append(f"Last name changed from '{old_last_name}' to '{new_last_name}'")
-                    messages.success(request, "Last name updated successfully!")
-
-            # Alterar senha (apenas se os campos de senha forem preenchidos)
-            current_password = request.POST.get('current_password', '')
-            new_password = request.POST.get('new_password', '')
-            confirm_password = request.POST.get('confirm_password', '')
-
-            if current_password or new_password or confirm_password:
-                if not (current_password and new_password and confirm_password):
-                    messages.error(request, "Please fill in all password fields to change your password.")
-                else:
-                    # Verificar a senha atual
-                    user_auth = authenticate(username=user.username, password=current_password)
-                    if user_auth is not None:
-                        if new_password == confirm_password:
-                            user.set_password(new_password)
-                            user.save()
-                            changes.append("Password changed successfully")
-                            messages.success(request, "Password updated successfully!")
-                        else:
-                            messages.error(request, "New password and confirmation do not match.")
-                    else:
-                        messages.error(request, "Current password is incorrect.")
-
-            # Enviar e-mail via webhook se houver mudanças
             if changes:
                 self.send_change_notification(profile.email, user.username, profile.first_name, changes)
 
             return redirect('settings', user_id=user.id)
         except User.DoesNotExist:
             raise Http404("User not found")
+
+    def update_username(self, request, user):
+        new_username = request.POST.get('username', '').strip()
+        changes = []
+
+        if not (3 <= len(new_username) <= 30):
+            messages.error(request, "Username must be between 3 and 30 characters.")
+            return changes
+
+        if new_username and new_username != user.username:
+            if User.objects.filter(username=new_username).exclude(id=user.id).exists():
+                messages.error(request, "This username is already taken. Please choose a different one.")
+            else:
+                old_username = user.username
+                user.username = new_username
+                user.save()
+                changes.append(f"Username changed from '{old_username}' to '{new_username}'")
+                messages.success(request, "Username updated successfully!")
+
+        return changes
+    
+    def update_profile_info(self, request, profile):
+        changes = []
+        new_first_name = request.POST.get('first_name', '').strip()
+        new_last_name = request.POST.get('last_name', '').strip()
+
+        if new_first_name and not (2 <= len(new_first_name) <= 50):
+            messages.error(request, "First name must be between 2 and 50 characters.")
+        elif new_first_name and new_first_name != profile.first_name:
+            old_first_name = profile.first_name
+            profile.first_name = new_first_name
+            changes.append(f"First name changed from '{old_first_name}' to '{new_first_name}'")
+            messages.success(request, "First name updated successfully!")
+
+        if new_last_name and not (2 <= len(new_last_name) <= 50):
+            messages.error(request, "Last name must be between 2 and 50 characters.")
+        elif new_last_name and new_last_name != profile.last_name:
+            old_last_name = profile.last_name
+            profile.last_name = new_last_name
+            changes.append(f"Last name changed from '{old_last_name}' to '{new_last_name}'")
+            messages.success(request, "Last name updated successfully!")
+
+        profile.save()
+        return changes
+
+    def update_password(self, request, user):
+        current_password = request.POST.get('current_password', '')
+        new_password = request.POST.get('new_password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        changes = []
+
+        if not all([current_password, new_password, confirm_password]):
+            messages.error(request, "Please fill in all password fields to change your password.")
+            return changes
+
+        if not (len(new_password) >= 8 and any(char.isupper() for char in new_password) and any(char.islower() for char in new_password) and any(char.isdigit() for char in new_password) and any(char in "!@#$%^&*()" for char in new_password)):
+            messages.error(request, "New password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.")
+            return changes
+
+        user_auth = authenticate(username=user.username, password=current_password)
+        if user_auth is None:
+            messages.error(request, "Current password is incorrect.")
+            return changes
+
+        if new_password != confirm_password:
+            messages.error(request, "New password and confirmation do not match.")
+            return changes
+
+        user.set_password(new_password)
+        user.save()
+        changes.append("Password changed successfully")
+        messages.success(request, "Password updated successfully!")
+
+        return changes
 
     def send_change_notification(self, email, username, first_name, changes):
         webhook_url = "https://n8n.leonardolavourinha.com/webhook/1cd32f77-6428-491e-86ad-818f63524319"

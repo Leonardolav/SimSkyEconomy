@@ -1,9 +1,10 @@
+import re
 from django.views import View
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.contrib.auth.models import User
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from sistema.models import UserProfile, ReputationLevel, Currency, EmailVerificationToken
-from datetime import date
+from django.utils import timezone
 import requests
 from django.urls import reverse
 
@@ -12,36 +13,58 @@ class SignupView(View):
         return render(request, 'signup.html')
 
     def post(self, request):
-        if request.htmx:
-            username = request.POST.get('username', '')
-            email = request.POST.get('email', '')
-            response_data = {}
+        if request.htmx:  
+            username = request.POST.get('username')
+            email = request.POST.get('email')
+            response_data = {'username_error': '', 'email_error': ''}
 
-            if username:
-                if User.objects.filter(username=username).exists():
-                    response_data['username_error'] = 'Username already in use'
-                else:
-                    response_data['username_error'] = ''
-            if email:
-                if User.objects.filter(email=email).exists():
-                    response_data['email_error'] = 'Email already in use'
-                else:
-                    response_data['email_error'] = ''
-            
+            if username and User.objects.filter(username=username).exists():
+                response_data['username_error'] = 'Username already in use'
+            if email and User.objects.filter(email=email).exists():
+                response_data['email_error'] = 'Email already in use'
+
             return JsonResponse(response_data)
-        else:
-            try:
-                username = request.POST.get('username', '')
-                password = request.POST.get('password', '')
-                first_name = request.POST.get('first_name', '')
-                last_name = request.POST.get('last_name', '')
-                email = request.POST.get('email', '')
+
+        try:
+            username = request.POST.get('username', '')
+            password = request.POST.get('password', '')
+            first_name = request.POST.get('first_name', '')
+            last_name = request.POST.get('last_name', '')
+            email = request.POST.get('email', '')
+
+            if not username or not password or not first_name or not last_name or not email:
+                return JsonResponse({'success': False, 'error': 'All fields are required'})
+
+            if not (3 <= len(username) <= 30):
+                return JsonResponse({'success': False, 'error': 'Username must be between 3 and 30 characters'})
+
+            if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email):
+                return JsonResponse({'success': False, 'error': 'Invalid email format'})
+
+            if not (3 <= len(first_name) <= 30):
+                return JsonResponse({'success': False, 'error': 'First name must be between 3 and 30 characters'})
+            
+            if not (3 <= len(last_name) <= 30):
+                return JsonResponse({'success': False, 'error': 'Last name must be between 3 and 30 characters'})
 
                 # Check if username or email is already in use
-                if User.objects.filter(username=username).exists():
-                    return JsonResponse({'success': False, 'error': 'Username already in use'})
-                if User.objects.filter(email=email).exists():
-                    return JsonResponse({'success': False, 'error': 'Email already in use'})
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({'success': False, 'error': 'Username already in use'})
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({'success': False, 'error': 'Email already in use'})
+
+            reputation_level, currency = None, None
+            try:
+                reputation_level = ReputationLevel.objects.get(reputation_grade='F-')
+            except ReputationLevel.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Initial reputation level not found.'})
+            try:
+                currency = Currency.objects.get(code='USD')
+            except Currency.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Default currency not found.'})
+
+            with transaction.atomic():
+
 
                 user = User.objects.create_user(username=username, password=password, email=email, first_name=first_name, last_name=last_name)
                 
@@ -53,7 +76,7 @@ class SignupView(View):
                     first_name=first_name,
                     last_name=last_name,
                     email=email,
-                    registration_date=date.today(),
+                    registration_date=timezone.now(),
                     reputation_level=reputation_level,
                     score=0,
                     first_access=True,
@@ -61,6 +84,7 @@ class SignupView(View):
                     preferred_currency=currency,
                     cash_balance = 5000.00,
                 )
+            
                 
                 # Welcome email
                 welcome_html = f"""
@@ -120,9 +144,12 @@ class SignupView(View):
                     print(f"Verification email webhook failed with status {response.status_code}: {response.text}")
                 
                 return JsonResponse({'success': True})
-            except Exception as e:
-                return JsonResponse({'success': False, 'error': str(e)})
+        except IntegrityError:
+            return JsonResponse({'success': False, 'error': 'An error occurred during user creation.'})
+        except Exception:
+            return JsonResponse({'success': False, 'error': 'An unexpected error occurred.'})
 
+from django.db import IntegrityError, transaction
 class VerifyEmailView(View):
     def get(self, request, token):
         try:
