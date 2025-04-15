@@ -5,10 +5,7 @@ from django.http import Http404, HttpResponseForbidden
 from django.utils import timezone
 from datetime import timedelta
 from django.core.paginator import Paginator
-from sistema.models import User, UserProfile, Reputation, ReputationLevel, UserProfilePicture  # Importar o novo modelo
-
-class NoProfilePicture(Exception):
-    pass
+from sistema.models import User, UserProfile, Reputation, ReputationLevel, UserProfilePicture
 
 class ReputationView(LoginRequiredMixin, View):
     template_name = 'reputation.html'
@@ -22,11 +19,10 @@ class ReputationView(LoginRequiredMixin, View):
         try:
             user = User.objects.select_related('userprofile', 'profile_picture').get(id=user_id)
             profile = user.userprofile
-            try:
-                if not user.profile_picture:
-                    raise NoProfilePicture
+            try:                
                 user_picture = user.profile_picture.profile_picture
-            except NoProfilePicture:
+            except AttributeError:
+
                 user_picture = None
             reputation_data_dict = self.get_reputation_data(request, profile)            
             context = self.prepare_context(user, user_picture, reputation_data_dict['total_score'], reputation_data_dict['level'], reputation_data_dict['progress_percent'],

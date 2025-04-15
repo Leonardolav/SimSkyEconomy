@@ -1,34 +1,30 @@
-# sistema/views/user/homeuser.py
-from typing import Optional
 from django.contrib.auth import logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.db.models import Prefetch
 from django.views import View
 
-class NoProfilePicture(Exception):
-    pass
-from sistema.models import UserProfilePicture, UserProfile
 
 class Homeuser(LoginRequiredMixin, View):
     template_name = 'user.html'
     login_url = '/login/'
 
     def get(self, request, user_id, *args, **kwargs):
-        if request.user.id != user_id:
+        if request.user.id != user_id:            
             raise PermissionDenied("You do not have permission to access this page.")
 
-        try:
-            user = User.objects.select_related("profile_picture").get(id=user_id)
+        try:            
+            user = User.objects.filter(id=user_id).prefetch_related(Prefetch('profile_picture')).first()
+            if user is None:
+                raise Http404("User not found")
 
-            if user.profile_picture is None:
-                raise NoProfilePicture
             try:
-                profile_picture: str = user.profile_picture.profile_picture.url
-            except NoProfilePicture:
-                profile_picture = '👤'
+                profile_picture = user.profile_picture.profile_picture.url
+            except AttributeError:
+                profile_picture = '👤'           
 
             user_data = {
                 'id': user.id,
