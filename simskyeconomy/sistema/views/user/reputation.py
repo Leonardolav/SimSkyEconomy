@@ -18,16 +18,15 @@ class ReputationView(LoginRequiredMixin, View):
 
         try:
             user = User.objects.select_related('profile_picture').get(id=user_id)
-
+            profile = user.userprofile
             try:
                 user_picture = user.profile_picture.profile_picture
-                profile = user.userprofile
-
-
             except AttributeError:
-
                 user_picture = None
-            reputation_data_dict = self.get_reputation_data(request, profile)            
+            
+            reputation_data_dict = self.get_reputation_data(request, profile)
+
+
             context = self.prepare_context(user, user_picture, reputation_data_dict['total_score'], reputation_data_dict['level'], reputation_data_dict['progress_percent'],
                                             reputation_data_dict['current_min_score'], reputation_data_dict['next_min_score'], reputation_data_dict['score_30_days'],
                                             reputation_data_dict['score_60_days'], reputation_data_dict['score_90_days'], reputation_data_dict['reputations'], request.GET.get('period', 'all'))
