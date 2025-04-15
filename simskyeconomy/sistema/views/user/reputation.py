@@ -17,10 +17,13 @@ class ReputationView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to view this page.")
 
         try:
-            user = User.objects.select_related('userprofile', 'profile_picture').get(id=user_id)
-            profile = user.userprofile
-            try:                
+            user = User.objects.select_related('profile_picture').get(id=user_id)
+
+            try:
                 user_picture = user.profile_picture.profile_picture
+                profile = user.userprofile
+
+
             except AttributeError:
 
                 user_picture = None
