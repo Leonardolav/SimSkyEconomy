@@ -17,24 +17,25 @@ class ReputationView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to view this page.")
 
         try:
-            user = User.objects.select_related('profile_picture').get(id=user_id)
-            profile = user.userprofile
+            user = User.objects.select_related('profile_picture', 'userprofile').get(id=user_id)
+            
             try:
                 user_picture = user.profile_picture.profile_picture
             except AttributeError:
                 user_picture = None
-            
-            reputation_data_dict = self.get_reputation_data(request, profile)
+            try:
+                profile = user.userprofile
+                reputation_data_dict = self.get_reputation_data(request, profile)
 
 
-            context = self.prepare_context(user, user_picture, reputation_data_dict['total_score'], reputation_data_dict['level'], reputation_data_dict['progress_percent'],
-                                            reputation_data_dict['current_min_score'], reputation_data_dict['next_min_score'], reputation_data_dict['score_30_days'],
-                                            reputation_data_dict['score_60_days'], reputation_data_dict['score_90_days'], reputation_data_dict['reputations'], request.GET.get('period', 'all'))
-            return render(request, self.template_name, context)
+                context = self.prepare_context(user, user_picture, reputation_data_dict['total_score'], reputation_data_dict['level'], reputation_data_dict['progress_percent'],
+                                                reputation_data_dict['current_min_score'], reputation_data_dict['next_min_score'], reputation_data_dict['score_30_days'],
+                                                reputation_data_dict['score_60_days'], reputation_data_dict['score_90_days'], reputation_data_dict['reputations'], request.GET.get('period', 'all'))
+                return render(request, self.template_name, context)
+            except UserProfile.DoesNotExist:
+                raise Http404("User profile not found")
         except User.DoesNotExist:
             raise Http404("User not found")
-        except UserProfile.DoesNotExist:
-            raise Http404("User profile not found")
     
     def get_reputation_data(self, request, profile):
         period = request.GET.get('period', 'all')
