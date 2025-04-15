@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, JsonResponse, HttpResponseForbidden
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, logout
+from django.contrib.auth import authenticate, logout, get_user_model
 from sistema.models import UserProfilePicture, UserProfile
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -76,11 +76,14 @@ class SettingsView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to access these settings.")
 
         try:
-            user = User.objects.select_related('profile_picture', 'user_profile').get(id=user_id)
-            profile = user.userprofile
+            user = User.objects.select_related('profile_picture').get(id=user_id)
             
             user_picture = user.profile_picture
             profile_picture_url = user_picture.profile_picture.url if user_picture and user_picture.profile_picture else '👤'
+            try:
+                profile = user.user_profile
+            except UserProfile.DoesNotExist:
+                profile = UserProfile.objects.create(user=user, registration_date=timezone.now().date())
 
 
 
@@ -117,7 +120,7 @@ class SettingsView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to modify these settings.")
 
         try:
-            user = User.objects.select_related('user_profile').get(id=user_id)
+            user = User.objects.get(id=user_id)
             profile = user.userprofile
 
             if 'logout' in request.POST:
