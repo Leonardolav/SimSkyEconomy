@@ -20,7 +20,7 @@ class ProfileView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to access this profile.")
 
         try:
-            user = User.objects.select_related('userprofilepicture').get(id=user_id)
+            user = User.objects.select_related('profile_picture').get(id=user_id)
             
             profile_picture_instance = getattr(user, 'userprofilepicture', None)
 
@@ -41,7 +41,7 @@ class ProfileView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You are not authorized to update this profile.")
 
         try:
-            user = User.objects.select_related('userprofilepicture').get(id=user_id)
+            user = User.objects.select_related('profile_picture').get(id=user_id)
             profile = user.userprofilepicture
 
             # Atualizar a foto de perfil

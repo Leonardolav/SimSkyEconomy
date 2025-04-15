@@ -16,7 +16,7 @@ class BankView(LoginRequiredMixin, View):
             return HttpResponseForbidden("You do not have permission to access this bank information.")
 
         try:
-            user = User.objects.filter(id=user_id).select_related('userprofilepicture').only('id', 'username').first()
+            user = User.objects.filter(id=user_id).select_related('userprofilepicture').first()
             if user is None:
                 raise Http404("User not found")
             
